@@ -3,9 +3,14 @@
 
 
 import pygame
-from blocks import *
-from levels import *
-from camera import *
+from pygame import (Surface, Color, KEYDOWN, KEYUP,
+                    K_LEFT, K_RIGHT, K_UP, QUIT)
+from blocks import (Platform, Spike, Ring,
+                    BackFontRing, FrontFontRing, Invisible,
+                    HRing, HBackFontRing, HFrontFontRing,
+                    HInvisible, SavePoint, BonusLife, Exit)
+from levels import level_1
+from camera import Camera, camera_configure
 
 WIN_WIDTH = 9 * 32
 WIN_HEIGHT = 10 * 32
@@ -19,30 +24,29 @@ PLATFORM_HEIGHT = 32
 def play(player):
     pygame.init()
 
-    screen = pygame.display.set_mode(DISPLAY)  # Создаем окно
-    pygame.display.set_caption("Bounce")  # Название программы
+    screen = pygame.display.set_mode(DISPLAY)
+    pygame.display.set_caption("Bounce")
 
-    background = Surface((WIN_WIDTH, WIN_HEIGHT))  # Создание поверхности
-    background.fill(Color(BACKGROUND_COLOR))  # Заливаем поверхность цветом
+    background = Surface((WIN_WIDTH, WIN_HEIGHT))
+    background.fill(Color(BACKGROUND_COLOR))
 
     score_ground = Surface((WIN_WIDTH, WIN_HEIGHT - 3 * 32))
     score_ground.fill(Color(SCORE_GROUND_COLOR))
 
-    ball = player(64, 32)  # создаем мяч по (x,y) координатам
-    up = left = right = False  # по умолчанию — кнопки не нажаты
+    ball = player(64, 32)
+    up = left = right = False
 
     my_font = pygame.font.SysFont('Arial', 30)
 
-    # необходимо для исследования на столкновения объектов
     entities_back = pygame.sprite.Group()
     entities_front = pygame.sprite.Group()
-    platforms = []  # то, во что мы будем врезаться или опираться
+    platforms = []
 
-    level = level_1  # инициализация уровня
+    level = level_1
 
-    x = y = 0  # координаты
-    for row in level:  # вся строка
-        for col in row:  # каждый символ
+    x = y = 0
+    for row in level:
+        for col in row:
             if col == "-":
                 pf = Platform(x, y)
                 entities_back.add(pf)
@@ -105,22 +109,21 @@ def play(player):
                 pf = HInvisible(x + 54, y + 8)
                 platforms.append(pf)
 
-            x += PLATFORM_WIDTH  # блоки платформы ставятся на ширине блоков
-        y += PLATFORM_HEIGHT  # то же самое и с высотой
-        x = 0  # на каждой новой строчке начинаем с нуля
+            x += PLATFORM_WIDTH
+        y += PLATFORM_HEIGHT
+        x = 0
 
-    # Высчитываем фактическую ширину уровня
     total_level_width = len(level[0]) * PLATFORM_WIDTH
-    total_level_height = len(level) * PLATFORM_HEIGHT  # высоту
+    total_level_height = len(level) * PLATFORM_HEIGHT
 
     camera = Camera(camera_configure, total_level_width, total_level_height)
     timer = pygame.time.Clock()
 
-    while True:  # Основной цикл программы
+    while True:
 
         timer.tick(60)
 
-        for e in pygame.event.get():  # Обрабатываем события
+        for e in pygame.event.get():
             if e.type == QUIT:
                 raise SystemExit
             if e.type == KEYDOWN and e.key == K_LEFT:
@@ -136,10 +139,9 @@ def play(player):
             if e.type == KEYUP and e.key == K_UP:
                 up = False
 
-        # Каждую итерацию необходимо всё перерисовывать
         screen.blit(background, (0, 0))
-        ball.update(left, right, up, platforms)  # передвижение
-        camera.update(ball)  # центризируем камеру относительно персонажа
+        ball.update(left, right, up, platforms)
+        camera.update(ball)
 
         for e in entities_back:
             screen.blit(e.image, camera.apply(e))
@@ -168,4 +170,4 @@ def play(player):
         if ball.is_game_over():
             raise SystemExit
 
-        pygame.display.update()  # обновление и вывод всех изменений на экран
+        pygame.display.update()

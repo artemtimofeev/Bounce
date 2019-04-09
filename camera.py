@@ -7,7 +7,6 @@ WIN_WIDTH = 9 * 32
 WIN_HEIGHT = 8 * 32
 
 
-# MOVING CAMERA:
 class Camera(object):
     def __init__(self, camera_func, width, height):
         self.camera_func = camera_func
@@ -21,13 +20,15 @@ class Camera(object):
 
 
 def camera_configure(camera, target_rect):
-    lng, t, _, _ = target_rect
-    _, _, w, h = camera
-    lng, t = -lng + WIN_WIDTH / 2, -t + WIN_HEIGHT / 2
+    x_coordinate, y_coordinate, abs, abs = target_rect
+    abs, abs, weight, height = camera
+    x_coordinate, y_coordinate = (-x_coordinate
+                                  + WIN_WIDTH / 2,
+                                  -y_coordinate + WIN_HEIGHT / 2)
 
-    lng = min(0, lng)
-    lng = max(-(camera.width - WIN_WIDTH), lng)
-    t = max(-(camera.height - WIN_HEIGHT), t)
-    t = min(0, t)
+    x_coordinate = min(0, x_coordinate)
+    x_coordinate = max(-(camera.width - WIN_WIDTH), x_coordinate)
+    y_coordinate = max(-(camera.height - WIN_HEIGHT), y_coordinate)
+    y_coordinate = min(0, y_coordinate)
 
-    return Rect(lng, t, w, h)
+    return Rect(x_coordinate, y_coordinate, weight, height)

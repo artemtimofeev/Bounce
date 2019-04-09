@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from blocks import *
+from pygame import *
+from blocks import (Platform, Spike, Ring,
+                    BackFontRing, FrontFontRing, Invisible,
+                    HRing, HBackFontRing, HFrontFontRing,
+                    HInvisible, SavePoint, BonusLife, Exit)
 
 WIDTH = 32
 HEIGHT = 32
@@ -10,17 +14,17 @@ GRAVITY = 0.23
 
 class Player(sprite.Sprite):
 
-    def __init__(self, x, y):
+    def __init__(self, x_coordinate, y_coordinate):
 
         sprite.Sprite.__init__(self)
-        self.xvel = 0  # скорость перемещения. 0 - стоять на месте
-        self.startX = x  # Начальная позиция Х
-        self.startY = y
+        self.xvel = 0
+        self.startX = x_coordinate
+        self.startY = y_coordinate
         self.image = image.load("images/ball.png")
-        self.rect = Rect(x, y, WIDTH, HEIGHT)  # прямоугольный объект
-        self.yvel = 0  # скорость вертикального перемещения
-        self.onGround = False  # На земле ли я?
-        self.Score = "0000000"  # количество очков
+        self.rect = Rect(x_coordinate, y_coordinate, WIDTH, HEIGHT)
+        self.yvel = 0
+        self.onGround = False
+        self.Score = "0000000"
         self.ring_count = 0
         self.lifes = 3
         self.life_image = image.load("images/life_image.png")
@@ -32,106 +36,103 @@ class Player(sprite.Sprite):
     def update(self, left, right, up, platforms):
 
         if up:
-            # прыгаем, только когда можем оттолкнуться от земли
             if self.onGround:
                 self.yvel = -self.JUMP_POWER
 
         if left:
-            self.xvel = -self.MOVE_SPEED  # Лево = x - n
+            self.xvel = -self.MOVE_SPEED
 
         if right:
-            self.xvel = self.MOVE_SPEED  # Право = x + n
+            self.xvel = self.MOVE_SPEED
 
-        if not (left or right):  # стоим, когда нет указаний идти
+        if not (left or right):
             self.xvel = 0
 
         if not self.onGround:
             self.yvel += GRAVITY
 
-        self.onGround = False  # Мы не знаем, когда мы на земле
+        self.onGround = False
         self.rect.y += self.yvel
         self.collide(0, self.yvel, platforms)
 
-        self.rect.x += self.xvel  # переносим свои положение на xvel
+        self.rect.x += self.xvel
         self.collide(self.xvel, 0, platforms)
 
     def collide(self, xvel, yvel, platforms):
 
-        for p in platforms:
-            # если есть пересечение платформы с игроком
-            if sprite.collide_rect(self, p):
+        for platform in platforms:
+            if sprite.collide_rect(self, platform):
 
-                if isinstance(p, Spike):
+                if isinstance(platform, Spike):
                     self.die()
                     return
 
-                if (isinstance(p, SavePoint) and
-                        not p.activeted):
-                    p.get_saved(self)
+                if (isinstance(platform, SavePoint) and
+                        not platform.activeted):
+                    platform.get_saved(self)
                     new_score = str(int(self.Score) + 500)
                     self.Score = "0" * (7 - len(new_score)) + new_score
 
-                if (isinstance(p, BonusLife) and
-                        not p.activeted):
-                    p.deactivate()
+                if (isinstance(platform, BonusLife) and
+                        not platform.activeted):
+                    platform.deactivate()
                     new_score = str(int(self.Score) + 1000)
                     self.Score = "0" * (7 - len(new_score)) + new_score
                     self.lifes += 1
 
-                if isinstance(p, Ring) or isinstance(p, HRing):
-                    if p.active:
+                if isinstance(platform, Ring) or isinstance(platform, HRing):
+                    if platform.active:
                         new_score = str(int(self.Score) + 500)
                         self.Score = "0" * (7 - len(new_score)) + new_score
-                        p.deactivate()
+                        platform.deactivate()
                         self.ring_count -= 1
                         if self.ring_count == 0:
                             for d in platforms:
                                 if isinstance(d, Exit):
                                     d.activate()
-                if isinstance(p, Exit):
-                    exit(p)
+                if isinstance(platform, Exit):
+                    exit(platform)
 
-                if (isinstance(p, FrontFontRing) or
-                        isinstance(p, HFrontFontRing)):
+                if (isinstance(platform, FrontFontRing) or
+                        isinstance(platform, HFrontFontRing)):
                     for d in platforms:
                         if (sprite.collide_rect(self, d) and
                                 (isinstance(d, Ring) or
                                  isinstance(d, HRing))):
-                            p.deactivate()
+                            platform.deactivate()
 
-                if (isinstance(p, BackFontRing) or
-                        isinstance(p, HBackFontRing)):
+                if (isinstance(platform, BackFontRing) or
+                        isinstance(platform, HBackFontRing)):
                     for d in platforms:
                         if (sprite.collide_rect(self, d) and
                                 (isinstance(d, Ring) or
                                  isinstance(d, HRing))):
-                            p.deactivate()
+                            platform.deactivate()
 
-                if (isinstance(p, Platform) or
-                        isinstance(p, Invisible) or
-                        isinstance(p, HInvisible)):
-                    if xvel > 0:  # если движется вправо
-                        self.rect.right = p.rect.left  # то не движется вправо
+                if (isinstance(platform, Platform) or
+                        isinstance(platform, Invisible) or
+                        isinstance(platform, HInvisible)):
+                    if xvel > 0:
+                        self.rect.right = platform.rect.left
 
-                    if xvel < 0:  # если движется влево
-                        self.rect.left = p.rect.right  # то не движется влево
+                    if xvel < 0:
+                        self.rect.left = platform.rect.right
 
-                    if yvel > 0:  # если падает вниз
-                        self.rect.bottom = p.rect.top  # то не падает вниз
-                        self.onGround = True  # и становится на что-то твердое
-                        if self.yvel < 6:  # и энергия падения пропадает
+                    if yvel > 0:
+                        self.rect.bottom = platform.rect.top
+                        self.onGround = True
+                        if self.yvel < 6:
                             self.yvel = 0
                         else:
                             self.yvel = - self.yvel / 2
 
-                    if yvel < 0:  # если движется вверх
-                        self.rect.top = p.rect.bottom  # то не движется вверх
-                        self.yvel = 0  # и энергия прыжка пропадает
+                    if yvel < 0:
+                        self.rect.top = platform.rect.bottom
+                        self.yvel = 0
 
     def die(self):
         time.wait(500)
         self.lifes -= 1
-        # перемещаемся в начальные координаты
         self.teleporting(self.startX, self.startY)
 
     def teleporting(self, go_x, go_y):
@@ -144,15 +145,15 @@ class Player(sprite.Sprite):
 
 class FastPlayer(Player):
 
-    def __init__(self, x, y):
-        Player.__init__(self, x, y)
+    def __init__(self, x, y_coordinate):
+        Player.__init__(self, x, y_coordinate)
         self.MOVE_SPEED = 10
         self.image = image.load("images/fast_ball.png")
 
 
 class HighJumpPlayer(Player):
 
-    def __init__(self, x, y):
-        Player.__init__(self, x, y)
+    def __init__(self, x, y_coordinate):
+        Player.__init__(self, x, y_coordinate)
         self.JUMP_POWER = 12
         self.image = image.load("images/high_jump_ball.png")

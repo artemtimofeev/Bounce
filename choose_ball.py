@@ -4,11 +4,11 @@ from ball import *
 def choose():
     print("Choose your ball: 1 - usual, 2 - fast, 3 - high jump")
 
-    n = int(input())
+    choose = int(input())
 
-    if n == 1:
+    if choose == 1:
         return Player
-    if n == 2:
+    if choose == 2:
         return FastPlayer
-    if n == 3:
+    if choose == 3:
         return HighJumpPlayer
